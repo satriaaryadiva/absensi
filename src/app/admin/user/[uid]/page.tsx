@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
-import {  useParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import useSWR from 'swr'
 import axios from 'axios'
 import { useState } from 'react'
@@ -18,7 +18,7 @@ export default function UserDetailPage() {
   if (error) return <div className="text-red-500 p-4">Gagal memuat data</div>
   if (!data) return <div className="p-4">Loading...</div>
 
-  const filtered = data.filter((item: any) => {
+  const filtered = data.absensi.filter((item: any) => {
     const tanggal = new Date(item.tanggal)
     const matchTanggal = filterTanggal ? format(tanggal, 'yyyy-MM-dd') === filterTanggal : true
     const matchBulan = filterBulan ? format(tanggal, 'MM') === filterBulan : true
@@ -29,8 +29,8 @@ export default function UserDetailPage() {
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-2">👤 Detail Absensi</h1>
       <p className="text-gray-black mb-4">
-        <span className="font-semibold">Nama:</span> {data[0]?.nama || 'Unknown'} <br />
-        <span className="font-semibold">Jabatan:</span> {data[0]?.jabatan || 'Unknown'}
+        <span className="font-semibold">Nama:</span> {data.user?.nama || 'Unknown'} <br />
+        <span className="font-semibold">Jabatan:</span> {data.user?.jabatan || 'Unknown'}
       </p>
 
       {/* Filter */}
@@ -65,7 +65,7 @@ export default function UserDetailPage() {
         )}
 
         {filtered.map((item: any, i: number) => (
-          <div key={i} className="border p-4 rounded shadow-sm hover:shadow transition-all bg-white">
+          <div key={i} className="border p-4 rounded shadow-sm hover:shadow transition-all ">
             <p className="text-sm text-gray-500 mb-1">
               {format(new Date(item.tanggal), 'EEEE, dd MMMM yyyy', { locale: id })}
             </p>

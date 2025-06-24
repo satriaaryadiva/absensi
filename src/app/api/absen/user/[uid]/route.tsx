@@ -1,39 +1,35 @@
-// app/api/absen/user/[uid]/route.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextResponse } from 'next/server'
-import { db } from '@/lib/firebase'
-import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore'
+// ✅ src/app/api/absen/user/[uid]/route.ts
+import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/firebase' // asumsi lo pakai Firebase
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore'
 
-export async function GET(_: Request, { params }: { params: { uid: string } }) {
+export async function GET(request: NextRequest) {
+  const uid = request.nextUrl.pathname.split('/').pop()
+
+  if (!uid) {
+    return NextResponse.json({ error: 'UID tidak ditemukan' }, { status: 400 })
+  }
+
   try {
-    const uid = params.uid
-    if (!uid) return NextResponse.json({ error: 'UID tidak ditemukan' }, { status: 400 })
-
-    const absenRef = query(collection(db, 'absensi'), where('uid', '==', uid))
-    const snapshot = await getDocs(absenRef)
-
     const userRef = doc(db, 'users', uid)
     const userSnap = await getDoc(userRef)
 
-    const nama = userSnap.exists() ? userSnap.data().nama : 'Unknown'
-    const jabatan = userSnap.exists() ? userSnap.data().jabatan : 'Unknown'
+    if (!userSnap.exists()) {
+      return NextResponse.json({ error: 'User tidak ditemukan' }, { status: 404 })
+    }
 
-    const data: any[] = []
-    snapshot.forEach(doc => {
-      const absen = doc.data()
-      data.push({
-        uid,
-        nama,
-        jabatan,
-        tanggal: absen.tanggal,
-        datang: absen.datang?.toDate?.() || null,
-        pulang: absen.pulang?.toDate?.() || null,
-      })
+    const absensiRef = collection(db, 'absensi')
+    const absensiQuery = query(absensiRef, where('uid', '==', uid))
+    const absensiSnap = await getDocs(absensiQuery)
+
+    const absensiData = absensiSnap.docs.map(doc => doc.data())
+
+    return NextResponse.json({
+      user: userSnap.data(),
+      absensi: absensiData,
     })
-
-    return NextResponse.json(data)
-  } catch (err) {
-    console.error('🔥 Gagal ambil data user:', err)
-    return NextResponse.json({ error: 'Gagal ambil data user' }, { status: 500 })
+  } catch (error) {
+    console.error(error)
+    return NextResponse.json({ error: 'Terjadi kesalahan server' }, { status: 500 })
   }
 }

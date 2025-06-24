@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
-import { useSearchParams, useParams } from 'next/navigation'
+import {  useParams } from 'next/navigation'
 import useSWR from 'swr'
 import axios from 'axios'
 import { useState } from 'react'
@@ -66,7 +65,7 @@ export default function UserDetailPage() {
         )}
 
         {filtered.map((item: any, i: number) => (
-          <div key={i} className="border p-4 rounded shadow-sm hover:shadow transition-all  ">
+          <div key={i} className="border p-4 rounded shadow-sm hover:shadow transition-all bg-white">
             <p className="text-sm text-gray-500 mb-1">
               {format(new Date(item.tanggal), 'EEEE, dd MMMM yyyy', { locale: id })}
             </p>

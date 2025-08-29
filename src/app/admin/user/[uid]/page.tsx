@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
+
 import { useParams } from 'next/navigation'
 import useSWR from 'swr'
 import axios from 'axios'
@@ -15,13 +16,32 @@ export default function UserDetailPage() {
   const [filterTanggal, setFilterTanggal] = useState('')
   const [filterBulan, setFilterBulan] = useState('')
 
+  // ✅ Helper aman untuk format tanggal
+  const safeFormatDate = (value: any, formatStr: string): string => {
+    try {
+      if (!value) return '-'
+      const date = typeof value.toDate === 'function' ? value.toDate() : new Date(value)
+      if (isNaN(date.getTime())) return '-'
+      return format(date, formatStr, { locale: id })
+    } catch {
+      return '-'
+    }
+  }
+
   if (error) return <div className="text-red-500 p-4">Gagal memuat data</div>
   if (!data) return <div className="p-4">Loading...</div>
 
   const filtered = data.absensi.filter((item: any) => {
-    const tanggal = new Date(item.tanggal)
-    const matchTanggal = filterTanggal ? format(tanggal, 'yyyy-MM-dd') === filterTanggal : true
-    const matchBulan = filterBulan ? format(tanggal, 'MM') === filterBulan : true
+    const tanggal = item.tanggal?.toDate?.() ?? new Date(item.tanggal)
+    if (isNaN(tanggal.getTime())) return false
+
+    const matchTanggal = filterTanggal
+      ? safeFormatDate(tanggal, 'yyyy-MM-dd') === filterTanggal
+      : true
+    const matchBulan = filterBulan
+      ? safeFormatDate(tanggal, 'MM') === filterBulan
+      : true
+
     return matchTanggal && matchBulan
   })
 
@@ -51,7 +71,7 @@ export default function UserDetailPage() {
             const value = (i + 1).toString().padStart(2, '0')
             return (
               <option key={value} value={value}>
-                {format(new Date(2025, i), 'MMMM', { locale: id })}
+                {safeFormatDate(new Date(2025, i), 'MMMM')}
               </option>
             )
           })}
@@ -65,13 +85,13 @@ export default function UserDetailPage() {
         )}
 
         {filtered.map((item: any, i: number) => (
-          <div key={i} className="border p-4 rounded shadow-sm hover:shadow transition-all ">
+          <div key={i} className="border p-4 rounded shadow-sm hover:shadow transition-all">
             <p className="text-sm text-gray-500 mb-1">
-              {format(new Date(item.tanggal), 'EEEE, dd MMMM yyyy', { locale: id })}
+              {safeFormatDate(item.tanggal, 'EEEE, dd MMMM yyyy')}
             </p>
             <div className="flex justify-between text-sm sm:text-base">
-              <p>🟢 Datang: {item.datang ? format(new Date(item.datang), 'HH:mm') : '-'}</p>
-              <p>🔴 Pulang: {item.pulang ? format(new Date(item.pulang), 'HH:mm') : '-'}</p>
+              <p>🟢 Datang: {safeFormatDate(item.datang, 'HH:mm')}</p>
+              <p>🔴 Pulang: {safeFormatDate(item.pulang, 'HH:mm')}</p>
             </div>
           </div>
         ))}

@@ -1,95 +1,42 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/firebase'
-import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  serverTimestamp,
-} from 'firebase/firestore'
-import dayjs from 'dayjs'
+import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore'
+import { NextResponse } from 'next/server'
 
-type userData = {
-  nama: string
-  jabatan: string
-}
-
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const { uid } = await req.json()
-    if (!uid) {
-      return NextResponse.json({ error: 'UID diperlukan' }, { status: 400 })
+    const { uid, status } = await req.json()
+    const now = new Date()
+    const tanggal = now.toISOString().split('T')[0] // Format: 2025-07-25
+
+    if (!uid || !['datang', 'pulang'].includes(status)) {
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 })
     }
 
-    const today = dayjs().format('YYYY-MM-DD')
-    const absenId = `${uid}_${today}`
-    const absenRef = doc(db, 'absensi', absenId)
-    const absenSnap = await getDoc(absenRef)
+    const ref = doc(db, 'absensi', tanggal, 'records', uid)
+    const snapshot = await getDoc(ref)
 
-    const userRef = doc(db, 'users', uid)
-    const userSnap = await getDoc(userRef)
+    const data = snapshot.exists() ? snapshot.data() : {}
 
-    if (!userSnap.exists()) {
-      return NextResponse.json({ error: 'User tidak ditemukan' }, { status: 404 })
+    // Cegah absen dua kali
+    if (status === 'datang' && data.datang) {
+      return NextResponse.json({ error: 'Sudah absen datang hari ini' }, { status: 409 })
     }
 
-    const userData = userSnap.data() as userData
-
-    if (!absenSnap.exists()) {
-      await setDoc(absenRef, {
-        uid,
-        tanggal: today,
-        datang: serverTimestamp(),
-      })
-
-      return NextResponse.json({
-        status: 'success',
-        message: 'Absen datang dicatat',
-        user: {
-          nama: userData.nama,
-          jabatan: userData.jabatan,
-        },
-        datang: new Date().toISOString(),
-      })
+    if (status === 'pulang' && data.pulang) {
+      return NextResponse.json({ error: 'Sudah absen pulang hari ini' }, { status: 409 })
     }
 
-    const absenData = absenSnap.data()
+    const updateField = status === 'datang' ? { datang: Timestamp.now() } : { pulang: Timestamp.now() }
 
-    if (!absenData.pulang) {
-      await updateDoc(absenRef, {
-        pulang: serverTimestamp(),
-      })
-
-      return NextResponse.json({
-        status: 'success',
-        message: 'Absen pulang dicatat',
-        user: {
-          nama: userData.nama,
-          jabatan: userData.jabatan,
-        },
-        datang: absenData?.datang?.toDate?.() instanceof Date
-          ? absenData.datang.toDate().toISOString()
-          : null,
-        pulang: new Date().toISOString(),
-      })
-    }
-
-    return NextResponse.json({
-      status: 'done',
-      message: 'Sudah absen lengkap hari ini',
-      user: {
-        nama: userData.nama,
-        jabatan: userData.jabatan,
-      },
-      datang: absenData?.datang?.toDate?.() instanceof Date
-        ? absenData.datang.toDate().toISOString()
-        : null,
-      pulang: absenData?.pulang?.toDate?.() instanceof Date
-        ? absenData.pulang.toDate().toISOString()
-        : null,
+    await setDoc(ref, {
+      uid,
+      ...data,
+      ...updateField,
     })
+
+    return NextResponse.json({ message: 'Absen berhasil' })
   } catch (err) {
-    console.error(err)
-    return NextResponse.json({ error: 'Terjadi kesalahan server' }, { status: 500 })
+    console.error('🔥 Gagal absen:', err)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }

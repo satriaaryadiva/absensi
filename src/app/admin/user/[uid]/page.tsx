@@ -7,6 +7,7 @@ import axios from 'axios'
 import { useState } from 'react'
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale/id'
+import { QRCodeSVG } from 'qrcode.react'
 
 export default function UserDetailPage() {
   const { uid } = useParams()
@@ -47,11 +48,24 @@ export default function UserDetailPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-2">👤 Detail Absensi</h1>
-      <p className="text-gray-black mb-4">
-        <span className="font-semibold">Nama:</span> {data.user?.nama || 'Unknown'} <br />
-        <span className="font-semibold">Jabatan:</span> {data.user?.jabatan || 'Unknown'}
-      </p>
+      <h1 className="text-2xl font-bold mb-4">👤 Detail Absensi</h1>
+
+      {/* Kartu ID */}
+      <div className="flex justify-center mb-6">
+        <div className="w-72 h-96 bg-gradient-to-b from-blue-500 to-indigo-600 rounded-xl shadow-lg p-5 text-white flex flex-col items-center">
+          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-black font-bold text-lg shadow-md mb-3">
+            {data.user?.nama?.charAt(0) || 'U'}
+          </div>
+          <h3 className="text-xl font-bold">{data.user?.nama || 'Unknown'}</h3>
+          <p className="text-sm opacity-80 mb-4">{data.user?.jabatan || 'Staff'}</p>
+
+          <div className="bg-white p-3 rounded-lg shadow-inner">
+            <QRCodeSVG value={uid as string} size={120} />
+          </div>
+
+          <p className="mt-3 text-xs opacity-80">UID: {uid}</p>
+        </div>
+      </div>
 
       {/* Filter */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">

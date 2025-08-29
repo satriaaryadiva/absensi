@@ -16,10 +16,9 @@ export default function LoginPage() {
   const handleLogin = async () => {
     const loading = toast.loading('Masuk...')
     try {
-      await signInWithEmailAndPassword(auth, email, password)
+      const userCred = await signInWithEmailAndPassword(auth, email, password)
       toast.success('Berhasil masuk!', { id: loading })
-      router.push('/admin/dashboard') // redirect ke dashboard
-    } catch (err: any) {
+ router.push(`/user/${userCred.user.uid}`)    } catch (err: any) {
       console.error(err)
       toast.error(err.message || 'Gagal login', { id: loading })
     }

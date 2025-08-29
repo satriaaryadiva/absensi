@@ -29,11 +29,31 @@ export default function ModalCetakQR({ onClose }: { onClose: () => void }) {
     return () => clearTimeout(delayDebounce)
   }, [searchTerm])
 
+  const downloadQR = () => {
+    const svg = document.getElementById('qr-code') as unknown as SVGSVGElement
+    if (!svg) return
+    const serializer = new XMLSerializer()
+    const svgStr = serializer.serializeToString(svg)
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    const img = new Image()
+    img.onload = () => {
+      canvas.width = img.width
+      canvas.height = img.height
+      ctx?.drawImage(img, 0, 0)
+      const a = document.createElement('a')
+      a.download = `${selectedUser?.nama || 'qrcode'}.png`
+      a.href = canvas.toDataURL('image/png')
+      a.click()
+    }
+    img.src = 'data:image/svg+xml;base64,' + btoa(svgStr)
+  }
+
   return (
-    <div className="fixed inset-0 bg-black    bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded  text-black shadow-md w-full max-w-md relative">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded text-black shadow-md w-full max-w-md relative animate-fadeIn">
         <button
-          className="absolute top-2  right-3 text-black hover:text-red-500"
+          className="absolute top-2 right-3 text-black hover:text-red-500"
           onClick={onClose}
         >
           ✖
@@ -72,7 +92,13 @@ export default function ModalCetakQR({ onClose }: { onClose: () => void }) {
         {selectedUser && (
           <div className="mt-4 text-center">
             <p className="font-medium mb-2">{selectedUser.nama}</p>
-            <QRCodeSVG value={selectedUser.uid} size={200} />
+            <QRCodeSVG id="qr-code" value={selectedUser.uid} size={200} />
+            <button
+              onClick={downloadQR}
+              className="mt-3 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Download QR
+            </button>
           </div>
         )}
       </div>

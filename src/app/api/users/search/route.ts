@@ -1,23 +1,38 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/firebase'
-import { collection, getDocs, } from 'firebase/firestore'
+import { NextResponse } from "next/server";
+import { db } from "@/lib/firebase"; // pastikan kamu udah setup firebase config
+import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 
-export async function GET(req: NextRequest) {
-  const search = req.nextUrl.searchParams.get('q')?.toLowerCase() || ''
-
+export async function GET(
+  req: Request,
+  { params }: { params: { uid: string } }
+) {
   try {
-    const snapshot = await getDocs(collection(db, 'users'))
+    const { uid } = params;
 
-    const filtered = snapshot.docs
-      .map(doc => ({
-        uid: doc.id,
-        nama: doc.data().nama,
-      }))
-      .filter(user => user.nama.toLowerCase().includes(search))
+    // ambil subkoleksi absensi user
+    const absensiRef = collection(db, "users", uid, "absensi");
+    const snapshot = await getDocs(absensiRef);
 
-    return NextResponse.json(filtered)
-  } catch (error) {
-    return NextResponse.json({ error: 'Gagal mengambil data user' }, { status: 500 })
+    const absensi: any[] = [];
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+
+      absensi.push({
+        tanggal: docSnap.id, // id dokumen biasanya pakai format tanggal
+        datang: data.in || data.datang || null,
+        pulang: data.out || data.pulang || null,
+      });
+    });
+
+    return NextResponse.json({
+      uid,
+      absensi,
+    });
+  } catch (error: any) {
+    console.error("Error get absensi:", error);
+    return NextResponse.json(
+      { error: "Gagal ambil data absensi" },
+      { status: 500 }
+    );
   }
 }

@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { db } from "@/lib/firebase"; // pastikan kamu udah setup firebase config
-import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+import {  collection, getDocs } from "firebase/firestore";
 
 export async function GET(
   req: Request,

@@ -1,24 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { createUserWithEmailAndPassword } from 'firebase/auth'
-import { auth, db } from '@/lib/firebase'
-import { doc, setDoc } from 'firebase/firestore'
-import qrc from 'qrcode'
-import toast from 'react-hot-toast'
 
-type FormData = {
-  nama: string
-  nim: string
-  email: string
-  password: string
-  jabatan: string
-}
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
 export default function RegisterPage() {
   const router = useRouter()
-  const [form, setForm] = useState<FormData>({
+  const [form, setForm] = useState({
     nama: '',
     nim: '',
     email: '',
@@ -27,107 +16,142 @@ export default function RegisterPage() {
   })
   const [loading, setLoading] = useState(false)
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value })
+  }
+
   const handleRegister = async () => {
-    if (
-      !form.nama ||
-      !form.nim ||
-      !form.email ||
-      !form.password ||
-      !form.jabatan
-    ) {
+    if (!form.nama || !form.nim || !form.email || !form.password || !form.jabatan) {
       toast.error('Semua field wajib diisi!')
       return
     }
 
     setLoading(true)
-    const loadingToast = toast.loading('Mendaftarkan akun...')
+    const toastId = toast.loading('Mendaftarkan akun...')
 
     try {
-      const userCred = await createUserWithEmailAndPassword(
-        auth,
-        form.email,
-        form.password
-      )
-      const uid = userCred.user.uid
-
-      const qrUrl = await qrc.toDataURL(uid)
-
-      await setDoc(doc(db, 'users', uid), {
-        uid,
-        nama: form.nama,
-        nim: form.nim,
-        email: form.email,
-        jabatan: form.jabatan,
-        qr: qrUrl,
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
       })
 
-      toast.success('✅ Pendaftaran berhasil!', { id: loadingToast })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Gagal mendaftar')
+
+      toast.success('✅ Pendaftaran berhasil!', { id: toastId })
       router.push('/login')
-      setForm({
-        nama: '',
-        nim: '',
-        email: '',
-        password: '',
-        jabatan: '',
-      })
     } catch (err: any) {
       console.error(err)
-      toast.error(`❌ Gagal daftar: ${err.message}`, { id: loadingToast })
+      toast.error(`❌ ${err.message}`, { id: toastId })
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="p-6 max-w-sm mx-auto">
-      <h1 className="text-xl font-bold mb-4">Daftar Akun</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-8 border border-gray-100">
+        <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
+          Daftar Akun 🚀
+        </h1>
+        <p className="text-center text-gray-500 text-sm mb-8">
+          Buat akun baru untuk mengakses sistem absensi
+        </p>
 
-      <input
-        placeholder="Nama"
-        className="border p-2 w-full mb-2"
-        value={form.nama}
-        onChange={e => setForm({ ...form, nama: e.target.value })}
-      />
-      <input
-        placeholder="NIM"
-        className="border p-2 w-full mb-2"
-        value={form.nim}
-        onChange={e => setForm({ ...form, nim: e.target.value })}
-      />
-      <input
-        placeholder="Email"
-        type="email"
-        className="border p-2 w-full mb-2"
-        value={form.email}
-        onChange={e => setForm({ ...form, email: e.target.value })}
-      />
-      <input
-        placeholder="Password"
-        type="password"
-        className="border p-2 w-full mb-2"
-        value={form.password}
-        onChange={e => setForm({ ...form, password: e.target.value })}
-      />
-      <select
-        className="border p-2 w-full mb-4"
-        value={form.jabatan}
-        onChange={e => setForm({ ...form, jabatan: e.target.value })}
-      >
-        <option value="">Pilih Jabatan</option>
-        <option value="murid">Murid</option>
-        <option value="guru">Guru</option>
-        <option value="staf">Staf</option>
-      </select>
+        <div className="space-y-4">
+          <InputField
+            label="Nama Lengkap"
+            name="nama"
+            value={form.nama}
+            onChange={handleChange}
+          />
+          <InputField
+            label="NIM"
+            name="nim"
+            value={form.nim}
+            onChange={handleChange}
+          />
+          <InputField
+            label="Email"
+            type="email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+          />
+          <InputField
+            label="Password"
+            type="password"
+            name="password"
+            value={form.password}
+            onChange={handleChange}
+          />
 
-      <button
-        onClick={handleRegister}
-        disabled={loading}
-        className={`${
-          loading ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
-        } text-white p-2 w-full rounded`}
-      >
-        {loading ? 'Mendaftar...' : 'Daftar'}
-      </button>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Jabatan</label>
+            <select
+              name="jabatan"
+              value={form.jabatan}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            >
+              <option value="">Pilih Jabatan</option>
+              <option value="murid">Murid</option>
+              <option value="guru">Guru</option>
+              <option value="staf">Staf</option>
+            </select>
+          </div>
+
+          <button
+            onClick={handleRegister}
+            disabled={loading}
+            className={`w-full py-3 rounded-lg text-white font-semibold transition-all shadow-sm ${
+              loading
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98]'
+            }`}
+          >
+            {loading ? 'Mendaftar...' : 'Daftar Sekarang'}
+          </button>
+        </div>
+
+        <p className="text-center text-sm text-gray-500 mt-6">
+          Sudah punya akun?{' '}
+          <span
+            className="text-blue-600 font-semibold cursor-pointer hover:underline"
+            onClick={() => router.push('/login')}
+          >
+            Login di sini
+          </span>
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function InputField({
+  label,
+  name,
+  value,
+  onChange,
+  type = 'text',
+}: {
+  label: string
+  name: string
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  type?: string
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <input
+        name={name}
+        type={type}
+        value={value}
+        onChange={onChange}
+        className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+      />
     </div>
   )
 }

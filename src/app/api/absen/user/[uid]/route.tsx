@@ -1,7 +1,6 @@
-// ✅ src/app/api/absen/user/[uid]/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/firebase' // asumsi lo pakai Firebase
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore'
 
 export async function GET(request: NextRequest) {
   const uid = request.nextUrl.pathname.split('/').pop()
@@ -11,6 +10,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // 🔹 Ambil data user
     const userRef = doc(db, 'users', uid)
     const userSnap = await getDoc(userRef)
 
@@ -18,18 +18,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User tidak ditemukan' }, { status: 404 })
     }
 
-    const absensiRef = collection(db, 'absensi')
-    const absensiQuery = query(absensiRef, where('uid', '==', uid))
-    const absensiSnap = await getDocs(absensiQuery)
+    // 🔹 Ambil subkoleksi absensi
+    const absensiRef = collection(db, 'users', uid, 'absensi')
+    const absensiSnap = await getDocs(absensiRef)
 
-    const absensiData = absensiSnap.docs.map(doc => doc.data())
+    // 🔹 Normalisasi data
+    const absensiData = absensiSnap.docs.map((d) => {
+      const data = d.data()
+      return {
+        id: d.id,
+        tanggal: d.id || data.tanggal || null,
+        datang: data.datang || data.in || null,
+        pulang: data.pulang || data.out || null,
+      }
+    })
 
     return NextResponse.json({
-      user: userSnap.data(),
+      user: { id: uid, ...userSnap.data() },
       absensi: absensiData,
     })
   } catch (error) {
-    console.error(error)
+    console.error('🔥 Error:', error)
     return NextResponse.json({ error: 'Terjadi kesalahan server' }, { status: 500 })
   }
 }

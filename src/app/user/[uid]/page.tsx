@@ -10,7 +10,7 @@ const db = getFirestore(app)
 
 // Lokasi kantor (Sei Kera Hilir II)
 const OFFICE_LOCATION = { lat: 3.376800, lng:98.553037}
-const MAX_DISTANCE = 150 // meter
+const MAX_DISTANCE = 1000150 // meter
 
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371e3

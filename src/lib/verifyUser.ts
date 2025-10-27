@@ -15,3 +15,4 @@ export async function verifyUser(req: Request) {
     throw new Error("Invalid or expired token");
   }
 }
+

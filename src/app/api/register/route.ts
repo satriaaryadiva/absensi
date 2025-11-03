@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+export const runtime = "nodejs"; // 🧠 pakai runtime Node.js
+
 import { NextResponse } from 'next/server'
-import { adminAuth, adminDb  } from '@/lib/firebaseAdmin'
+import { adminAuth, adminDb } from '@/lib/firebaseAdmin'
 
 export async function POST(req: Request) {
   try {

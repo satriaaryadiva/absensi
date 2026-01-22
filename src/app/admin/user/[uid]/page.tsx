@@ -13,8 +13,14 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Separator } from '@/components/ui/separator'
 import { Calendar, Clock, TrendingUp, User, Loader2 } from 'lucide-react'
+
+interface AttendanceRecord {
+  tanggal: string | null;
+  datang: string | null;
+  pulang: string | null;
+  status: string;
+}
 
 export default function UserDetailPage() {
   const { uid } = useParams()
@@ -46,7 +52,7 @@ export default function UserDetailPage() {
   }
 
   // Normalize and filter data
-  const absensi = useMemo(() => {
+  const absensi = useMemo<AttendanceRecord[]>(() => {
     if (!data?.absensi) return []
     return (data.absensi || []).map((a: any) => ({
       tanggal: a.tanggal || a.id,
@@ -57,8 +63,8 @@ export default function UserDetailPage() {
   }, [data])
 
   const filtered = useMemo(() => {
-    return absensi.filter((item: any) => {
-      const date = new Date(item.tanggal)
+    return absensi.filter((item) => {
+      const date = new Date(item.tanggal || '')
       if (isNaN(date.getTime())) return false
 
       const matchBulan = filterBulan !== 'all'
@@ -72,8 +78,8 @@ export default function UserDetailPage() {
   // Calculate statistics
   const stats = useMemo(() => {
     const total = filtered.length
-    const hadir = filtered.filter((a: any) => a.status === 'hadir' || a.datang).length
-    const terlambat = filtered.filter((a: any) => {
+    const hadir = filtered.filter(a => a.status === 'hadir' || a.datang).length
+    const terlambat = filtered.filter(a => {
       if (!a.datang) return false
       const time = safeFormatTime(a.datang)
       if (time === '-') return false
@@ -229,7 +235,7 @@ export default function UserDetailPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((item: any, i: number) => (
+                {filtered.map((item, i) => (
                   <TableRow key={i}>
                     <TableCell className="font-medium">
                       {safeFormatDate(item.tanggal, 'EEEE, dd MMMM yyyy')}

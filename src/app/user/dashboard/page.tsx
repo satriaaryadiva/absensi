@@ -1,12 +1,12 @@
 // src/app/(user)/user/dashboard/page.tsx
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAppSelector } from '@/store/hooks';
 import { Attendance } from '@/lib/types';
 import { Timestamp } from 'firebase/firestore';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -28,11 +28,7 @@ export default function UserDashboard() {
   const [loading, setLoading] = useState(true);
   const [checkingOut, setCheckingOut] = useState(false);
 
-  useEffect(() => {
-    fetchTodayAttendance();
-  }, []);
-
-  const fetchTodayAttendance = async () => {
+  const fetchTodayAttendance = useCallback(async () => {
     try {
       const res = await fetch(`/api/attendance/today?userId=${user?.uid}`);
       const data = await res.json();
@@ -42,7 +38,13 @@ export default function UserDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.uid]);
+
+  useEffect(() => {
+    if (user?.uid) {
+      fetchTodayAttendance();
+    }
+  }, [fetchTodayAttendance, user?.uid]);
 
   const handleCheckOut = async () => {
     setCheckingOut(true);
@@ -62,6 +64,7 @@ export default function UserDashboard() {
         toast.error(data.message);
       }
     } catch (error) {
+      console.error(error);
       toast.error('Gagal check-out');
     } finally {
       setCheckingOut(false);
@@ -173,8 +176,8 @@ export default function UserDashboard() {
                 </div>
 
                 <div className={`rounded-xl p-5 border ${attendance.checkOut
-                    ? 'bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30 border-violet-200/50 dark:border-violet-800/30'
-                    : 'bg-muted/50 border-border'
+                  ? 'bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30 border-violet-200/50 dark:border-violet-800/30'
+                  : 'bg-muted/50 border-border'
                   }`}>
                   <div className="flex items-center gap-2 mb-2">
                     <LogOut className={`size-4 ${attendance.checkOut ? 'text-violet-600 dark:text-violet-400' : 'text-muted-foreground'}`} />
@@ -183,8 +186,8 @@ export default function UserDashboard() {
                     </p>
                   </div>
                   <p className={`text-3xl font-bold font-mono ${attendance.checkOut
-                      ? 'text-violet-700 dark:text-violet-300'
-                      : 'text-muted-foreground/50'
+                    ? 'text-violet-700 dark:text-violet-300'
+                    : 'text-muted-foreground/50'
                     }`}>
                     {formatTime(attendance.checkOut)}
                   </p>

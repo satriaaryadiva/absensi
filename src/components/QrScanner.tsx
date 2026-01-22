@@ -46,13 +46,14 @@ export default function QrScanner({ onScan }: { onScan: (uid: string) => Promise
               }, 3000)
             }
           },
-          (err) => {
-            // Ignore common scanning noise/errors
+          () => {
+            // Ignore scanning errors
           }
         )
-      } catch (err: any) {
+      } catch (err) {
         console.error('Failed to start scanner:', err)
-        setError(err.message || 'Gagal memulai kamera')
+        const errorMessage = (err as Error).message || 'Gagal memulai kamera'
+        setError(errorMessage)
         toast.error('Gagal mengakses kamera. Pastikan izin kamera diberikan.')
       }
     }

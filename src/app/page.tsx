@@ -43,6 +43,7 @@ const features = [
 
 export default function Home() {
   const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { user, loading, initialized } = useAppSelector((state: { auth: any; }) => state.auth);
 
   useEffect(() => {

@@ -72,6 +72,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useAppDispatch();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { user, loading } = useAppSelector((state: { auth: any; }) => state.auth);
   const [sheetOpen, setSheetOpen] = useState(false);
 

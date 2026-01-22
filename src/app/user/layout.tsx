@@ -69,7 +69,7 @@ export default function UserLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAppSelector((state) => state.auth);
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const allowedRoles = ['user', 'staf', 'murid', 'guru'];
+
 
   // Middleware handles auth redirection
   useEffect(() => {

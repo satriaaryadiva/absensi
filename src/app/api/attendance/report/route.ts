@@ -53,10 +53,10 @@ export async function GET(req: Request) {
             // Stats calculation below
 
             const stats = {
-                hadir: attendance.filter((r: any) => r.status === 'hadir').length,
-                pulang: attendance.filter((r: any) => r.status === 'pulang').length,
-                izin: attendance.filter((r: any) => r.status === 'izin').length,
-                sakit: attendance.filter((r: any) => r.status === 'sakit').length,
+                hadir: attendance.filter((r) => r.status === 'hadir').length,
+                pulang: attendance.filter((r) => r.status === 'pulang').length,
+                izin: attendance.filter((r) => r.status === 'izin').length,
+                sakit: attendance.filter((r) => r.status === 'sakit').length,
                 alpha: 0
             };
 

@@ -1,10 +1,10 @@
 // src/app/(user)/user/history/page.tsx
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAppSelector } from '@/store/hooks';
 import { Attendance } from '@/lib/types';
 import { Timestamp } from 'firebase/firestore';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -22,11 +22,7 @@ export default function HistoryPage() {
   const [history, setHistory] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchHistory();
-  }, []);
-
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     try {
       const res = await fetch(`/api/attendance/history?userId=${user?.uid}`);
       const data = await res.json();
@@ -36,7 +32,13 @@ export default function HistoryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.uid]);
+
+  useEffect(() => {
+    if (user?.uid) {
+      fetchHistory();
+    }
+  }, [fetchHistory, user?.uid]);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);

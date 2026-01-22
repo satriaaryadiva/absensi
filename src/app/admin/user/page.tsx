@@ -19,6 +19,7 @@ import { Search, Loader2 } from 'lucide-react';
 interface User {
     uid: string;
     name?: string;
+    nama?: string;
     email?: string;
     role?: 'admin' | 'user' | 'staf' | 'murid' | 'guru';
     jabatan?: string;
@@ -53,7 +54,7 @@ export default function UserManagementPage() {
     }, []);
 
     const filteredUsers = users.filter(user => {
-        const name = (user.name || (user as any).nama || '').toLowerCase();
+        const name = (user.name || user.nama || '').toLowerCase();
         const email = (user.email || '').toLowerCase();
         const query = searchQuery.toLowerCase();
         return name.includes(query) || email.includes(query);
@@ -122,10 +123,10 @@ export default function UserManagementPage() {
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <Avatar>
-                                                <AvatarFallback>{getInitials(user.name, (user as any).nama)}</AvatarFallback>
+                                                <AvatarFallback>{getInitials(user.name, user.nama)}</AvatarFallback>
                                             </Avatar>
                                             <div>
-                                                <div className="font-medium">{user.name || (user as any).nama || 'Tanpa Nama'}</div>
+                                                <div className="font-medium">{user.name || user.nama || 'Tanpa Nama'}</div>
                                                 <div className="text-xs text-muted-foreground">{user.email}</div>
                                             </div>
                                         </div>

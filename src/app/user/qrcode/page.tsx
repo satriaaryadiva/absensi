@@ -1,15 +1,15 @@
 // src/app/(user)/user/qrcode/page.tsx
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAppSelector } from '@/store/hooks';
 import { auth } from '@/lib/firebase';
 import QRCode from 'qrcode';
 import { toast } from 'sonner';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { QrCode, RefreshCw, CheckCircle2, User, Mail, Loader2, Download, Shield } from 'lucide-react';
+import { QrCode, RefreshCw, CheckCircle2, Mail, Loader2, Download, Shield } from 'lucide-react';
 
 export default function QRCodePage() {
   const { user } = useAppSelector((state) => state.auth);
@@ -17,11 +17,7 @@ export default function QRCodePage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    generateQRCode();
-  }, []);
-
-  const generateQRCode = async () => {
+  const generateQRCode = useCallback(async () => {
     try {
       const token = await auth.currentUser?.getIdToken();
       if (!token) throw new Error('User not authenticated');
@@ -50,11 +46,18 @@ export default function QRCodePage() {
         setQrDataUrl(url);
       }
     } catch (error) {
+      console.error(error);
       toast.error('Gagal generate QR Code');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.uid]);
+
+  useEffect(() => {
+    if (user?.uid) {
+      generateQRCode();
+    }
+  }, [generateQRCode, user?.uid]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

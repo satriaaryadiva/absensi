@@ -1,143 +1,235 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-'use client'
+// src/app/(admin)/admin/dashboard/page.tsx
+'use client';
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
+import {
+  Users,
+  UserCheck,
+  UserX,
+  QrCode,
+  ClipboardList,
+  TrendingUp,
+  ArrowRight,
+  Clock,
+  Calendar
+} from 'lucide-react';
 
-import Link from 'next/link'
-import useSWR from 'swr'
-import axios from 'axios'
-import { useState } from 'react'
-import { format } from 'date-fns'
-import { id } from 'date-fns/locale'
-
-export default function AdminDashboard() {
-  const fetcher = (url: string) => axios.get(url).then(res => res.data)
-  const { data, error } = useSWR('/api/absen/list', fetcher, {
-    refreshInterval: 10000, // auto refresh tiap 10 detik
-  })
-
-  const [search, setSearch] = useState('')
-  const [filterJabatan, setFilterJabatan] = useState('')
-
-  if (error) return <div className="text-red-500 p-4">❌ Gagal memuat data</div>
-  if (!data) return <div className="p-4">⏳ Loading...</div>
-
-  // ✅ Pastikan data aman (ada nama, jabatan, tanggal, dll)
-  const filtered = data.filter((item: any) => {
-    const nama = item.nama?.toLowerCase?.() ?? ''
-    const jabatan = item.jabatan ?? ''
-    const matchNama = nama.includes(search.toLowerCase())
-    const matchJabatan = filterJabatan ? jabatan === filterJabatan : true
-    return matchNama && matchJabatan
-  })
-
-  // ✅ Statistik
-  const totalAbsen = filtered.length
-  const hadirHariIni = countToday(filtered)
-  const belumPulang = countBelumPulang(filtered)
-  const totalData = data.length
-
-  return (
-    <div className="p-6 max-w-6xl mx-auto text-black">
-      <h1 className="text-2xl font-bold mb-4">📊 Dashboard Absensi</h1>
-
-      {/* 🔎 Filter */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-        <input
-          type="text"
-          placeholder="Cari nama..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="border px-3 py-2 rounded w-full md:w-1/3"
-        />
-        <select
-          value={filterJabatan}
-          onChange={(e) => setFilterJabatan(e.target.value)}
-          className="border px-3 py-2 rounded w-full md:w-1/4"
-        >
-          <option value="">Semua Jabatan</option>
-          <option value="murid">Murid</option>
-          <option value="guru">Guru</option>
-          <option value="staf">Staf</option>
-        </select>
-      </div>
-
-      {/* 📈 Statistik */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <StatCard title="Total Absen" value={totalAbsen} color="bg-blue-500" />
-        <StatCard title="Hadir Hari Ini" value={hadirHariIni} color="bg-green-500" />
-        <StatCard title="Belum Pulang" value={belumPulang} color="bg-yellow-500" />
-        <StatCard title="Total Data" value={totalData} color="bg-purple-500" />
-      </div>
-
-      {/* 📋 List Absen */}
-      <div className="grid gap-4">
-        {filtered.length === 0 ? (
-          <div className="italic text-gray-500">Tidak ada data cocok.</div>
-        ) : (
-          filtered.map((absen: any, i: number) => (
-            <Link key={i} href={`/admin/user/${absen.uid}`} target="_blank">
-              <div className="border rounded-md p-4 shadow hover:bg-gray-50 cursor-pointer transition">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-lg font-semibold text-blue-700 underline">
-                      {absen.nama}
-                    </h3>
-                    <p className="text-sm text-gray-700">Jabatan: {absen.jabatan}</p>
-                    <p className="text-sm text-gray-700">NIM: {absen.nim ?? '-'}</p>
-                  </div>
-                  <div className="text-right text-xs text-gray-500">
-                    <p>{formatDate(absen.tanggal)}</p>
-                    <p>{absen.datang ? `🟢 ${absen.datang}` : 'Belum Datang'}</p>
-                    <p>{absen.pulang ? `🔴 ${absen.pulang}` : 'Belum Pulang'}</p>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))
-        )}
-      </div>
-    </div>
-  )
+interface Stats {
+  todayPresent: number;
+  todayCheckOut: number;
+  totalUsers: number;
 }
-
-/* =====================
-   🔹 Komponen & Utils 🔹
-===================== */
 
 function StatCard({
   title,
   value,
-  color,
+  icon: Icon,
+  variant = 'default',
+  description
 }: {
-  title: string
-  value: any
-  color: string
+  title: string;
+  value: number;
+  icon: React.ElementType;
+  variant?: 'default' | 'success' | 'purple' | 'blue';
+  description?: string;
+}) {
+  const variants = {
+    default: 'from-slate-500 to-slate-600',
+    success: 'from-emerald-500 to-green-600',
+    purple: 'from-violet-500 to-purple-600',
+    blue: 'from-blue-500 to-indigo-600',
+  };
+
+  const bgVariants = {
+    default: 'bg-slate-100 dark:bg-slate-800',
+    success: 'bg-emerald-100 dark:bg-emerald-900/30',
+    purple: 'bg-violet-100 dark:bg-violet-900/30',
+    blue: 'bg-blue-100 dark:bg-blue-900/30',
+  };
+
+  return (
+    <Card className="overflow-hidden">
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between">
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <p className="text-3xl font-bold tracking-tight text-foreground">{value}</p>
+            {description && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <TrendingUp className="size-3" />
+                {description}
+              </p>
+            )}
+          </div>
+          <div className={`p-3 rounded-xl ${bgVariants[variant]}`}>
+            <Icon className={`size-6 text-${variant === 'default' ? 'slate' : variant === 'success' ? 'emerald' : variant === 'purple' ? 'violet' : 'blue'}-600 dark:text-${variant === 'default' ? 'slate' : variant === 'success' ? 'emerald' : variant === 'purple' ? 'violet' : 'blue'}-400`} />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ActionCard({
+  href,
+  title,
+  description,
+  icon: Icon,
+  gradient
+}: {
+  href: string;
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  gradient: string;
 }) {
   return (
-    <div className={`p-4 text-white rounded ${color}`}>
-      <h2 className="text-sm">{title}</h2>
-      <p className="text-2xl font-bold">{value}</p>
-    </div>
-  )
+    <Link href={href}>
+      <Card className={`group overflow-hidden border-0 bg-gradient-to-br ${gradient} text-white hover:shadow-lg hover:shadow-${gradient.includes('blue') ? 'blue' : 'emerald'}-500/20 transition-all duration-300 hover:-translate-y-1`}>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <Icon className="size-8 opacity-90" />
+              <h3 className="text-lg font-semibold">{title}</h3>
+              <p className="text-sm opacity-80">{description}</p>
+            </div>
+            <ArrowRight className="size-5 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
 }
 
-function formatDate(date: any) {
-  try {
-    if (!date) return '-'
-    const d = typeof date.toDate === 'function' ? date.toDate() : new Date(date)
-    return format(d, 'dd MMM yyyy', { locale: id })
-  } catch {
-    return '-'
+export default function AdminDashboard() {
+  const [stats, setStats] = useState<Stats>({
+    todayPresent: 0,
+    todayCheckOut: 0,
+    totalUsers: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const [reportRes, usersRes] = await Promise.all([
+        fetch(`/api/attendance/report?type=daily&date=${today}`),
+        fetch('/api/admin/users?role=user')
+      ]);
+
+      const reportData = await reportRes.json();
+      const usersData = await usersRes.json();
+
+      setStats({
+        todayPresent: reportData.stats?.hadir || 0,
+        todayCheckOut: reportData.stats?.pulang || 0,
+        totalUsers: usersData.data?.length || 0
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const currentDate = new Date().toLocaleDateString('id-ID', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <Skeleton className="h-4 w-24 mb-2" />
+                <Skeleton className="h-8 w-16" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
   }
-}
 
-function countToday(data: any[]) {
-  const today = new Date().toDateString()
-  return data.filter(item => {
-    const tanggal = new Date(item.tanggal).toDateString()
-    return tanggal === today
-  }).length
-}
+  return (
+    <div className="max-w-7xl mx-auto space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Dashboard Admin</h1>
+          <p className="text-muted-foreground flex items-center gap-2">
+            <Calendar className="size-4" />
+            {currentDate}
+          </p>
+        </div>
+        <Badge variant="info" className="w-fit">
+          <Clock className="size-3 mr-1" />
+          {new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+        </Badge>
+      </div>
 
-function countBelumPulang(data: any[]) {
-  return data.filter(item => !item.pulang).length
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatCard
+          title="Total User"
+          value={stats.totalUsers}
+          icon={Users}
+          variant="blue"
+          description="Pengguna terdaftar"
+        />
+        <StatCard
+          title="Hadir Hari Ini"
+          value={stats.todayPresent}
+          icon={UserCheck}
+          variant="success"
+          description="Sudah check-in"
+        />
+        <StatCard
+          title="Sudah Pulang"
+          value={stats.todayCheckOut}
+          icon={UserX}
+          variant="purple"
+          description="Sudah check-out"
+        />
+      </div>
+
+      {/* Action Cards */}
+      <div>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Aksi Cepat</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <ActionCard
+            href="/admin/scan"
+            title="Scan QR Code"
+            description="Scan QR Code user untuk check-in"
+            icon={QrCode}
+            gradient="from-blue-600 to-indigo-600"
+          />
+          <ActionCard
+            href="/admin/attendance"
+            title="Lihat Data Absensi"
+            description="Kelola dan lihat semua data absensi"
+            icon={ClipboardList}
+            gradient="from-emerald-600 to-teal-600"
+          />
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -1,8 +1,7 @@
 // src/app/(admin)/admin/dashboard/page.tsx
 'use client';
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -37,12 +36,7 @@ function StatCard({
   variant?: 'default' | 'success' | 'purple' | 'blue';
   description?: string;
 }) {
-  const variants = {
-    default: 'from-slate-500 to-slate-600',
-    success: 'from-emerald-500 to-green-600',
-    purple: 'from-violet-500 to-purple-600',
-    blue: 'from-blue-500 to-indigo-600',
-  };
+
 
   const bgVariants = {
     default: 'bg-slate-100 dark:bg-slate-800',

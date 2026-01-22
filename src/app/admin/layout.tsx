@@ -75,7 +75,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAppSelector((state: { auth: any; }) => state.auth);
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  // Middleware handles auth redirection now
+
   useEffect(() => {
     // Only check for role-based redirect if user data is loaded (hydration)
     if (user && user.role !== 'admin') {

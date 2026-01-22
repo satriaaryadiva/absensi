@@ -19,11 +19,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { toast } from 'sonner';
-import { Search, Loader2, Save } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 
 interface User {
     id: string;
@@ -67,7 +63,7 @@ export default function RoleManagementPage() {
             await updateDoc(userRef, { role: newRole });
 
             setUsers(prev => prev.map(user =>
-                user.id === userId ? { ...user, role: newRole as any } : user
+                user.id === userId ? { ...user, role: newRole as 'admin' | 'user' | 'staf' | 'murid' | 'guru' } : user
             ));
 
             toast.success('Role berhasil diperbarui');
